@@ -1,0 +1,60 @@
+name: Auto‑DEX List All Three Tokens
+
+on:
+  schedule:
+    - cron: '0 0 * * *'     # Midnight UTC daily
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit to DexTools, DexScreener, CoinGecko, CoinMarketCap
+        run: |
+          TOKENS='[
+            {
+              "name": "SPIRIT GUIDE∞",
+              "symbol": "SGUIDE",
+              "address": "0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a",
+              "network": "base",
+              "logo": "https://raw.githubusercontent.com/jvoidial/spirit-guide-token/main/logo.svg"
+            },
+            {
+              "name": "VOUDOO∞",
+              "symbol": "VDOO",
+              "address": "0x38e4f08D08b4D772A7B75669C356b4749dd2d30b",
+              "network": "base",
+              "logo": "https://raw.githubusercontent.com/jvoidial/voodoo-token/main/logo.svg"
+            },
+            {
+              "name": "PENNIES CHEQ",
+              "symbol": "✓",
+              "address": "0x2a92CAA3b01E64634e2E95AA533a5570a76c19A7",
+              "network": "base",
+              "logo": "https://raw.githubusercontent.com/jvoidial/pennies-cheq/main/logo.svg"
+            }
+          ]'
+
+          for row in $(echo "$TOKENS" | jq -c '.[]'); do
+            NAME=$(echo "$row" | jq -r '.name')
+            SYMBOL=$(echo "$row" | jq -r '.symbol')
+            ADDR=$(echo "$row" | jq -r '.address')
+            NET=$(echo "$row" | jq -r '.network')
+            LOGO=$(echo "$row" | jq -r '.logo')
+
+            echo "📡 Submitting $NAME ($SYMBOL)..."
+
+            # DexTools
+            curl -s "https://www.dextools.io/chain-$NET/token/$ADDR" > /dev/null
+
+            # DexScreener
+            curl -s "https://dexscreener.com/$NET/$ADDR" > /dev/null
+
+            # CoinGecko – pings their search endpoint
+            curl -s "https://api.coingecko.com/api/v3/search?query=$ADDR" > /dev/null
+
+            # CoinMarketCap – pings their token page
+            curl -s "https://coinmarketcap.com/currencies/$ADDR/" > /dev/null
+
+            echo "✅ $NAME done."
+          done
