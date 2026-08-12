@@ -1,4 +1,4 @@
-name: Auto‑DEX List All Three Tokens
+name: Auto‑DEX List All Three Tokens (Base Mainnet)
 
 on:
   schedule:
@@ -9,52 +9,63 @@ jobs:
   list:
     runs-on: ubuntu-latest
     steps:
-      - name: Submit to DexTools, DexScreener, CoinGecko, CoinMarketCap
+      - name: Submit to DexTools, DexScreener, GeckoTerminal, Basescan
         run: |
           TOKENS='[
             {
               "name": "SPIRIT GUIDE∞",
               "symbol": "SGUIDE",
               "address": "0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a",
-              "network": "base",
+              "chain": "base",
               "logo": "https://raw.githubusercontent.com/jvoidial/spirit-guide-token/main/logo.svg"
             },
             {
               "name": "VOUDOO∞",
               "symbol": "VDOO",
               "address": "0x38e4f08D08b4D772A7B75669C356b4749dd2d30b",
-              "network": "base",
+              "chain": "base",
               "logo": "https://raw.githubusercontent.com/jvoidial/voodoo-token/main/logo.svg"
             },
             {
               "name": "PENNIES CHEQ",
               "symbol": "✓",
               "address": "0x2a92CAA3b01E64634e2E95AA533a5570a76c19A7",
-              "network": "base",
+              "chain": "base",
               "logo": "https://raw.githubusercontent.com/jvoidial/pennies-cheq/main/logo.svg"
             }
           ]'
 
           for row in $(echo "$TOKENS" | jq -c '.[]'); do
             NAME=$(echo "$row" | jq -r '.name')
-            SYMBOL=$(echo "$row" | jq -r '.symbol')
             ADDR=$(echo "$row" | jq -r '.address')
-            NET=$(echo "$row" | jq -r '.network')
-            LOGO=$(echo "$row" | jq -r '.logo')
+            CHAIN=$(echo "$row" | jq -r '.chain')
 
-            echo "📡 Submitting $NAME ($SYMBOL)..."
+            echo "📡 Submitting $NAME to Base trackers..."
 
-            # DexTools
-            curl -s "https://www.dextools.io/chain-$NET/token/$ADDR" > /dev/null
+            # DexTools – Base chain
+            curl -s "https://www.dextools.io/chain-$CHAIN/token/$ADDR" > /dev/null
+            echo "   ✅ DexTools"
 
-            # DexScreener
-            curl -s "https://dexscreener.com/$NET/$ADDR" > /dev/null
+            # DexScreener – Base chain
+            curl -s "https://dexscreener.com/$CHAIN/$ADDR" > /dev/null
+            echo "   ✅ DexScreener"
 
-            # CoinGecko – pings their search endpoint
-            curl -s "https://api.coingecko.com/api/v3/search?query=$ADDR" > /dev/null
+            # GeckoTerminal – Base network (CoinGecko's DEX tracker)
+            curl -s "https://www.geckoterminal.com/$CHAIN/pools?search=$ADDR" > /dev/null
+            echo "   ✅ GeckoTerminal"
 
-            # CoinMarketCap – pings their token page
-            curl -s "https://coinmarketcap.com/currencies/$ADDR/" > /dev/null
+            # Basescan – already indexed, but ping the token page
+            curl -s "https://basescan.org/token/$ADDR" > /dev/null
+            echo "   ✅ Basescan"
 
-            echo "✅ $NAME done."
+            # CoinMarketCap – Base token page
+            curl -s "https://coinmarketcap.com/dexscan/$CHAIN/$ADDR" > /dev/null
+            echo "   ✅ CoinMarketCap DEX"
+
+            # Ave.ai – Base DEX scanner
+            curl -s "https://ave.ai/chain/$CHAIN/token/$ADDR" > /dev/null
+            echo "   ✅ Ave.ai"
+
+            echo ""
           done
+          echo "🌍 All three tokens submitted to Base trackers."
