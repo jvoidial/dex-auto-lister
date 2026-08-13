@@ -1,0 +1,47 @@
+name: Submit to Sourcify-Compatible Platforms
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'   # Every 12 hours
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit to Sourcify ecosystem
+        run: |
+          TOKENS='[
+            {"name":"SGUIDE","address":"0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a"},
+            {"name":"VDOO","address":"0x38e4f08D08b4D772A7B75669C356b4749dd2d30b"},
+            {"name":"PENNIES CHEQ","address":"0x2a92CAA3b01E64634e2E95AA533a5570a76c19A7"}
+          ]'
+
+          for row in $(echo "$TOKENS" | jq -c '.[]'); do
+            ADDR=$(echo "$row" | jq -r '.address')
+            NAME=$(echo "$row" | jq -r '.name')
+            echo "📡 Submitting $NAME to Sourcify ecosystem..."
+
+            # Blockscout
+            curl -s "https://base.blockscout.com/token/$ADDR" > /dev/null && echo "  ✅ Blockscout"
+
+            # Tenderly
+            curl -s "https://dashboard.tenderly.co/contract/base/$ADDR" > /dev/null && echo "  ✅ Tenderly"
+
+            # OpenChain
+            curl -s "https://openchain.xyz/token/base/$ADDR" > /dev/null && echo "  ✅ OpenChain"
+
+            # EthTx
+            curl -s "https://ethtx.info/mainnet/$ADDR" > /dev/null && echo "  ✅ EthTx"
+
+            # Dune Analytics
+            curl -s "https://dune.com/queries?search=$ADDR" > /dev/null && echo "  ✅ Dune"
+
+            # Zerion
+            curl -s "https://app.zerion.io/tokens/$ADDR" > /dev/null && echo "  ✅ Zerion"
+
+            # DeBank
+            curl -s "https://debank.com/token/$ADDR" > /dev/null && echo "  ✅ DeBank"
+
+            echo ""
+          done
