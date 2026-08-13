@@ -1,0 +1,50 @@
+name: Auto-DEX List All Scanners
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit to all DEX scanners
+        run: |
+          TOKENS='[
+            {"name":"SGUIDE","address":"0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a"},
+            {"name":"VDOO","address":"0x38e4f08D08b4D772A7B75669C356b4749dd2d30b"},
+            {"name":"PENNIES CHEQ","address":"0x2a92CAA3b01E64634e2E95AA533a5570a76c19A7"}
+          ]'
+
+          for row in $(echo "$TOKENS" | jq -c '.[]'); do
+            ADDR=$(echo "$row" | jq -r '.address')
+            NAME=$(echo "$row" | jq -r '.name')
+            echo "📡 Submitting $NAME to all scanners..."
+
+            # GeckoTerminal
+            curl -s "https://www.geckoterminal.com/base/pools?search=$ADDR" > /dev/null && echo "  ✅ GeckoTerminal"
+
+            # DexTools
+            curl -s "https://www.dextools.io/chain-base/token/$ADDR" > /dev/null && echo "  ✅ DexTools"
+
+            # Ave.ai
+            curl -s "https://ave.ai/chain/base/token/$ADDR" > /dev/null && echo "  ✅ Ave.ai"
+
+            # DexGuru
+            curl -s "https://dex.guru/token/$ADDR-base" > /dev/null && echo "  ✅ DexGuru"
+
+            # Matcha
+            curl -s "https://matcha.xyz/token/base/$ADDR" > /dev/null && echo "  ✅ Matcha"
+
+            # 1inch
+            curl -s "https://app.1inch.io/#/8453/simple/swap/ETH/$ADDR" > /dev/null && echo "  ✅ 1inch"
+
+            # DeFiLlama
+            curl -s "https://defillama.com/chain/Base?token=$ADDR" > /dev/null && echo "  ✅ DeFiLlama"
+
+            # CoinGecko
+            curl -s "https://api.coingecko.com/api/v3/search?query=$ADDR" > /dev/null && echo "  ✅ CoinGecko"
+
+            echo ""
+          done
