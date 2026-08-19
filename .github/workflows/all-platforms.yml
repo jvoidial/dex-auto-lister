@@ -1,4 +1,4 @@
-name: Submit to All Remaining Platforms
+name: Submit to All Platforms
 
 on:
   schedule:
@@ -9,45 +9,44 @@ jobs:
   submit:
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Submit to all platforms
         run: |
+          set +e
           TOKENS='[
             {"name":"SGUIDE","address":"0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a"},
             {"name":"VDOO","address":"0x38e4f08D08b4D772A7B75669C356b4749dd2d30b"},
             {"name":"PENNIES CHEQ","address":"0x2a92CAA3b01E64634e2E95AA533a5570a76c19A7"}
           ]'
 
-          for row in $(echo "$TOKENS" | jq -c '.[]'); do
+          echo "$TOKENS" | jq -c '.[]' | while read -r row; do
             ADDR=$(echo "$row" | jq -r '.address')
             NAME=$(echo "$row" | jq -r '.name')
-            echo "📡 Submitting $NAME..."
+            echo "📡 Submitting $NAME ($ADDR)..."
 
-            # Tenderly
-            curl -s "https://dashboard.tenderly.co/contract/base/$ADDR" > /dev/null && echo "  ✅ Tenderly"
+            check_url() {
+              local url=$1
+              local label=$2
+              if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q '^2'; then
+                echo "  ✅ $label"
+              else
+                echo "  ❌ $label (failed)"
+              fi
+            }
 
-            # OpenChain
-            curl -s "https://openchain.xyz/token/base/$ADDR" > /dev/null && echo "  ✅ OpenChain"
-
-            # Dune
-            curl -s "https://dune.com/queries?search=$ADDR" > /dev/null && echo "  ✅ Dune"
-
-            # Zerion
-            curl -s "https://app.zerion.io/tokens/$ADDR" > /dev/null && echo "  ✅ Zerion"
-
-            # DeBank
-            curl -s "https://debank.com/token/$ADDR" > /dev/null && echo "  ✅ DeBank"
-
-            # SushiSwap
-            curl -s "https://www.sushi.com/swap?token0=$ADDR&chainId=8453" > /dev/null && echo "  ✅ SushiSwap"
-
-            # Aerodrome
-            curl -s "https://aerodrome.finance/swap?token0=$ADDR" > /dev/null && echo "  ✅ Aerodrome"
-
-            # BaseSwap
-            curl -s "https://baseswap.fi/swap?token0=$ADDR" > /dev/null && echo "  ✅ BaseSwap"
-
-            # Paraswap
-            curl -s "https://app.paraswap.io/#/8453/swap/$ADDR" > /dev/null && echo "  ✅ Paraswap"
-
+            check_url "https://dashboard.tenderly.co/contract/base/$ADDR" "Tenderly"
+            check_url "https://openchain.xyz/token/base/$ADDR" "OpenChain"
+            check_url "https://dune.com/queries?search=$ADDR" "Dune"
+            check_url "https://app.zerion.io/tokens/$ADDR" "Zerion"
+            check_url "https://debank.com/token/$ADDR" "DeBank"
+            check_url "https://www.sushi.com/swap?token0=$ADDR&chainId=8453" "SushiSwap"
+            check_url "https://aerodrome.finance/swap?token0=$ADDR" "Aerodrome"
+            check_url "https://baseswap.fi/swap?token0=$ADDR" "BaseSwap"
+            check_url "https://app.paraswap.io/#/8453/swap/$ADDR" "Paraswap"
             echo ""
           done
+
+          set -e
+          echo "✅ All submissions attempted."
