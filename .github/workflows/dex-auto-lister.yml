@@ -14,7 +14,7 @@ jobs:
 
       - name: Submit tokens to scanners
         run: |
-          # Token addresses (hardcoded from your token-lists/base.json)
+          # Token addresses (hardcoded)
           TOKENS=(
             "0x95c7e2d53f4b615a50d4468dfd5aff850dc17f0c"
             "0xb50DCEb0570557B9B7FE43D8cBDc9B3457D3dc5a"
